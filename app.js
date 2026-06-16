@@ -299,7 +299,9 @@ async function submitSlot(slot, el) {
     showToast("Couldn't save. Check your connection.", false);
     net("Save failed: " + err.message, "error");
   } finally {
-    btn.disabled = false; btn.textContent = "Log this session";
+    btn.disabled = false;
+    const slotAlreadyLogged = state.todayEntries.some(function (e) { return e.slotId === slot.id; });
+    btn.textContent = slotAlreadyLogged ? "Add another entry (optional)" : "Log this session";
   }
 }
 
@@ -343,7 +345,11 @@ function refreshProgress() {
   $("#m-badges").innerHTML = badges;
   SLOTS.forEach(function (s) {
     const card = $('.slot[data-slot="' + s.id + '"]');
-    if (card) card.classList.toggle("is-done", done.has(s.id));
+    if (card) {
+      card.classList.toggle("is-done", done.has(s.id));
+      const btn = $(".slot-submit", card);
+      if (btn) btn.textContent = done.has(s.id) ? "Add another entry (optional)" : "Log this session";
+    }
   });
 }
 
