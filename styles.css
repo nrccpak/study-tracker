@@ -421,3 +421,95 @@ h1, h2, h3 { font-family: "Fraunces", Georgia, serif; font-weight: 600; letter-s
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* ============================================================
+   HELP SYSTEM — flags + study materials
+   ============================================================ */
+
+.m-tabs {
+  display: flex; gap: 4px;
+  background: var(--bg-2); border-radius: 999px;
+  padding: 4px; margin-bottom: 22px; width: fit-content;
+}
+.m-tab {
+  font-family: inherit; font-weight: 600; font-size: .88rem;
+  color: var(--ink-soft); border: none; background: none;
+  cursor: pointer; padding: .55rem 1.1rem; border-radius: 999px;
+  white-space: nowrap; transition: all .2s var(--ease);
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.m-tab:hover { color: var(--ink); }
+.m-tab.is-active { background: var(--surface); color: var(--student); box-shadow: var(--shadow-s); }
+
+.m-tab-pip {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; border-radius: 999px; padding: 0 4px;
+  background: var(--student); color: #fff; font-size: .65rem; font-weight: 700;
+}
+
+.m-tab-panel { animation: screenIn .35s var(--ease); }
+
+.help-panel-section {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow-s);
+  padding: 20px; margin-bottom: 16px;
+}
+.help-panel-section .panel-head { margin-bottom: 14px; }
+.help-panel-section h3 { font-size: 1.25rem; }
+
+.flag-card {
+  background: var(--surface-2); border: 1px solid var(--line-2);
+  border-left: 3px solid var(--line); border-radius: 14px;
+  padding: 14px 16px; margin-bottom: 10px;
+}
+.flag--pending { border-left-color: var(--student); }
+.flag--resolved { border-left-color: var(--ok); opacity: .75; }
+
+.flag-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.flag-date { color: var(--muted); font-size: .78rem; }
+.flag-status-badge { font-size: .7rem; font-weight: 700; padding: .2rem .5rem; border-radius: 999px; }
+.flag-status--pending { background: var(--student-soft); color: #b85b34; }
+.flag-status--resolved { background: #e3f3ec; color: var(--ok); }
+
+.flag-msg { color: var(--ink-soft); font-size: .92rem; margin: 0 0 12px; overflow-wrap: anywhere; }
+.flag--resolved .flag-msg { color: var(--muted); }
+.flag-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.flag-new-wrap { margin-top: 14px; }
+.flag-form { margin-top: 12px; display: grid; gap: 10px; }
+.flag-input { resize: vertical; min-height: 80px; }
+.flag-form-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.help-board { display: grid; gap: 20px; }
+.help-material-card {
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-s);
+}
+.help-material-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px 12px; gap: 10px;
+}
+.help-material-title { font-family: "Fraunces", serif; font-size: 1.1rem; font-weight: 600; margin: 0; }
+.help-material-date { color: var(--muted); font-size: .78rem; white-space: nowrap; }
+.help-iframe-wrap {
+  position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden;
+}
+.help-iframe {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  border: none; border-top: 1px solid var(--line-2);
+}
+
+.help-add-form { display: grid; gap: 14px; }
+.f-help-success {
+  color: var(--ok); font-size: .88rem; font-weight: 600;
+  padding: .4rem; border-radius: var(--radius-sm); background: #e3f3ec; text-align: center;
+}
+
+.f-help-item {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line-2);
+}
+.f-help-item:last-child { border-bottom: none; }
+.f-help-item-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.f-help-item-title { font-weight: 600; font-size: .92rem; overflow-wrap: anywhere; }
+.f-help-item-date { color: var(--muted); font-size: .78rem; }

@@ -12,6 +12,8 @@ const state = {
   lastEntryId: null,     // Minahil: for Undo
   undoTimer: null,
   entries: [],           // Fiaz: all entries
+  flags: [],             // shared: help flags from Minahil
+  helpItems: [],         // shared: study materials from Fiaz
   hist: { range: "week", anchor: new Date() },
   selectedDay: null
 };
@@ -640,6 +642,237 @@ function runSearch(q) {
 }
 
 /* =============================================================
+   HELP SYSTEM — flags + study materials
+   ============================================================= */
+
+function convertToEmbedUrl(url) {
+  url = url.trim();
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (ytMatch) return "https://www.youtube.com/embed/" + ytMatch[1];
+  const driveFileMatch = url.match(/drive\.google\.com\/file\/d\/([^/?#\s]+)/);
+  if (driveFileMatch) return "https://drive.google.com/file/d/" + driveFileMatch[1] + "/preview";
+  const driveOpenMatch = url.match(/drive\.google\.com\/open\?id=([^&\s]+)/);
+  if (driveOpenMatch) return "https://drive.google.com/file/d/" + driveOpenMatch[1] + "/preview";
+  const docsMatch = url.match(/docs\.google\.com\/document\/d\/([^/?#\s]+)/);
+  if (docsMatch) return "https://docs.google.com/document/d/" + docsMatch[1] + "/preview";
+  const slidesMatch = url.match(/docs\.google\.com\/presentation\/d\/([^/?#\s]+)/);
+  if (slidesMatch) return "https://docs.google.com/presentation/d/" + slidesMatch[1] + "/embed";
+  const sheetsMatch = url.match(/docs\.google\.com\/spreadsheets\/d\/([^/?#\s]+)/);
+  if (sheetsMatch) return "https://docs.google.com/spreadsheets/d/" + sheetsMatch[1] + "/preview";
+  return url;
+}
+
+async function loadFlagsAndHelp() {
+  if (!isConfigured()) return;
+  net("Loading…");
+  try {
+    const [flagsRes, helpRes] = await Promise.all([
+      apiGet({ action: "getFlags" }),
+      apiGet({ action: "getHelp" })
+    ]);
+    state.flags     = (flagsRes && flagsRes.flags) ? flagsRes.flags : [];
+    state.helpItems = (helpRes  && helpRes.items)  ? helpRes.items  : [];
+    renderFlags();
+    renderHelpBoard();
+    net(null);
+  } catch (err) {
+    net("Couldn't load help data.", "error");
+  }
+}
+
+function renderFlags() {
+  const host = $("#m-flags-list");
+  if (!host) return;
+  const list = state.flags.slice().reverse();
+  if (!list.length) {
+    host.innerHTML = '<div class="empty">No questions flagged yet. Use the button below when something is unclear.</div>';
+  } else {
+    host.innerHTML = list.map(function (f) {
+      const pending = f.status === "pending";
+      return '<div class="flag-card flag--' + escapeHtml(f.status) + '">' +
+        '<div class="flag-meta">' +
+          '<span class="flag-date">' + escapeHtml(f.date) + '</span>' +
+          '<span class="flag-status-badge flag-status--' + escapeHtml(f.status) + '">' +
+            (pending ? "Waiting for help" : "Understood ✓") +
+          '</span>' +
+        '</div>' +
+        '<p class="flag-msg">' + escapeHtml(f.message) + '</p>' +
+        (pending ?
+          '<div class="flag-actions">' +
+            '<button class="btn btn--small btn--student" data-flag-resolve="' + escapeHtml(f.id) + '">Mark as understood ✓</button>' +
+            '<button class="btn btn--small btn--ghost" data-flag-add-more>Still not clear — add another flag</button>' +
+          '</div>' : '') +
+      '</div>';
+    }).join("");
+    $$("[data-flag-resolve]", host).forEach(function (btn) {
+      btn.addEventListener("click", function () { markFlagDone(btn.dataset.flagResolve); });
+    });
+    $$("[data-flag-add-more]", host).forEach(function (btn) {
+      btn.addEventListener("click", showFlagForm);
+    });
+  }
+  const pending = state.flags.filter(function (f) { return f.status === "pending"; }).length;
+  const pip = $("#m-help-pip");
+  if (pip) { pip.hidden = !pending; pip.textContent = pending; }
+}
+
+function renderHelpBoard() {
+  const host = $("#m-help-board");
+  if (!host) return;
+  const items = state.helpItems.slice().reverse();
+  if (!items.length) {
+    host.innerHTML = '<div class="empty">No study materials yet. Fiaz will add explanations here when you flag a question.</div>';
+    return;
+  }
+  host.innerHTML = items.map(function (item) {
+    const embedUrl = convertToEmbedUrl(item.driveLink || "");
+    const d = item.timestamp ? new Date(item.timestamp) : null;
+    const dateStr = d && !isNaN(d) ? fmtShortDate(d) : (item.date || "");
+    return '<div class="help-material-card">' +
+      '<div class="help-material-head">' +
+        '<h4 class="help-material-title">' + escapeHtml(item.title) + '</h4>' +
+        (dateStr ? '<span class="help-material-date">' + escapeHtml(dateStr) + '</span>' : '') +
+      '</div>' +
+      '<div class="help-iframe-wrap">' +
+        '<iframe src="' + escapeHtml(embedUrl) + '" class="help-iframe" allowfullscreen loading="lazy" title="' + escapeHtml(item.title) + '"></iframe>' +
+      '</div>' +
+    '</div>';
+  }).join("");
+}
+
+function showFlagForm() {
+  $("#m-flag-form").hidden = false;
+  $("#m-add-flag-btn").hidden = true;
+  $("#m-flag-text").focus();
+}
+function hideFlagForm() {
+  const form = $("#m-flag-form");
+  form.hidden = true;
+  form.reset();
+  $("#m-add-flag-btn").hidden = false;
+}
+
+async function submitFlag(e) {
+  e.preventDefault();
+  const message = $("#m-flag-text").value.trim();
+  if (!message) return;
+  const btn = $("[type=submit]", e.target);
+  btn.disabled = true; btn.textContent = "Submitting…";
+  const info = todayInfo();
+  try {
+    const res = await apiPost({ action: "submitFlag", date: info.dateStr, message: message });
+    if (!res || !res.ok) throw new Error(res && res.error ? res.error : "Failed");
+    state.flags.push(res.flag);
+    hideFlagForm();
+    renderFlags();
+    showToast("Flag submitted — Fiaz will respond soon.", false);
+  } catch (err) {
+    net("Couldn't submit flag: " + err.message, "error");
+  } finally {
+    btn.disabled = false; btn.textContent = "Submit Flag";
+  }
+}
+
+async function markFlagDone(id) {
+  try {
+    const res = await apiPost({ action: "updateFlag", id: id, status: "resolved" });
+    if (!res || !res.ok) throw new Error(res && res.error ? res.error : "Failed");
+    const flag = state.flags.find(function (f) { return f.id === id; });
+    if (flag) flag.status = "resolved";
+    renderFlags();
+    showToast("Marked as understood!", false);
+  } catch (err) {
+    net("Couldn't update: " + err.message, "error");
+  }
+}
+
+async function loadFiazHelpData() {
+  if (!isConfigured()) return;
+  net("Loading…");
+  try {
+    const [flagsRes, helpRes] = await Promise.all([
+      apiGet({ action: "getFlags" }),
+      apiGet({ action: "getHelp" })
+    ]);
+    state.flags     = (flagsRes && flagsRes.flags) ? flagsRes.flags : [];
+    state.helpItems = (helpRes  && helpRes.items)  ? helpRes.items  : [];
+    renderFiazFlagsPanel();
+    renderFiazHelpList();
+    net(null);
+  } catch (err) {
+    net("Couldn't load help data.", "error");
+  }
+}
+
+function renderFiazFlagsPanel() {
+  const host = $("#f-flags-list");
+  if (!host) return;
+  const list = state.flags.slice().reverse();
+  if (!list.length) {
+    host.innerHTML = '<div class="empty">No help requests from Minahil yet.</div>';
+    return;
+  }
+  host.innerHTML = list.map(function (f) {
+    return '<div class="flag-card flag--' + escapeHtml(f.status) + '">' +
+      '<div class="flag-meta">' +
+        '<span class="flag-date">' + escapeHtml(f.date) + '</span>' +
+        '<span class="flag-status-badge flag-status--' + escapeHtml(f.status) + '">' +
+          (f.status === "pending" ? "Pending" : "Resolved") +
+        '</span>' +
+      '</div>' +
+      '<p class="flag-msg">' + escapeHtml(f.message) + '</p>' +
+    '</div>';
+  }).join("");
+}
+
+function renderFiazHelpList() {
+  const host = $("#f-help-list");
+  if (!host) return;
+  const items = state.helpItems.slice().reverse();
+  if (!items.length) {
+    host.innerHTML = '<div class="empty">No materials added yet.</div>';
+    return;
+  }
+  host.innerHTML = items.map(function (item) {
+    const d = item.timestamp ? new Date(item.timestamp) : null;
+    const dateStr = d && !isNaN(d) ? fmtShortDate(d) : (item.date || "");
+    return '<div class="f-help-item">' +
+      '<div class="f-help-item-info">' +
+        '<span class="f-help-item-title">' + escapeHtml(item.title) + '</span>' +
+        (dateStr ? '<span class="f-help-item-date">' + escapeHtml(dateStr) + '</span>' : '') +
+      '</div>' +
+      '<a href="' + escapeHtml(item.driveLink) + '" target="_blank" rel="noopener noreferrer" class="btn btn--ghost btn--small">Open ↗</a>' +
+    '</div>';
+  }).join("");
+}
+
+async function submitHelpMaterial(e) {
+  e.preventDefault();
+  const title     = $("#f-help-title").value.trim();
+  const driveLink = $("#f-help-url").value.trim();
+  const errEl = $("#f-help-error");
+  const okEl  = $("#f-help-success");
+  if (!title || !driveLink) { errEl.hidden = false; okEl.hidden = true; return; }
+  errEl.hidden = true; okEl.hidden = true;
+  const btn = $("[type=submit]", e.target);
+  btn.disabled = true; btn.textContent = "Adding…";
+  try {
+    const res = await apiPost({ action: "submitHelp", title: title, driveLink: driveLink });
+    if (!res || !res.ok) throw new Error(res && res.error ? res.error : "Failed");
+    state.helpItems.push(res.item);
+    $("#f-help-title").value = "";
+    $("#f-help-url").value = "";
+    okEl.hidden = false;
+    setTimeout(function () { okEl.hidden = true; }, 3000);
+    renderFiazHelpList();
+  } catch (err) {
+    net("Couldn't add material: " + err.message, "error");
+  } finally {
+    btn.disabled = false; btn.textContent = "Add Material to Board";
+  }
+}
+
+/* =============================================================
    EVENT WIRING + INIT
    ============================================================= */
 function bind() {
@@ -672,8 +905,31 @@ function bind() {
         const on = p.dataset.panel === name;
         p.classList.toggle("is-active", on); p.hidden = !on;
       });
+      if (name === "help") loadFiazHelpData();
     });
   });
+
+  // Minahil tabs
+  $$(".m-tab").forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      $$(".m-tab").forEach(function (t) { t.classList.remove("is-active"); });
+      tab.classList.add("is-active");
+      const name = tab.dataset.mtab;
+      $$(".m-tab-panel").forEach(function (p) {
+        const on = p.dataset.mpanel === name;
+        p.classList.toggle("is-active", on); p.hidden = !on;
+      });
+      if (name === "help") loadFlagsAndHelp();
+    });
+  });
+
+  // flag form (Minahil)
+  $("#m-flag-form").addEventListener("submit", submitFlag);
+  $("#m-add-flag-btn").addEventListener("click", showFlagForm);
+  $("#m-flag-cancel").addEventListener("click", hideFlagForm);
+
+  // help material form (Fiaz)
+  $("#f-help-form").addEventListener("submit", submitHelpMaterial);
 
   // history range
   $$("#f-range .seg").forEach(function (seg) {
