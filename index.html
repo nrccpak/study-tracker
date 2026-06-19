@@ -93,35 +93,75 @@
 
     <main class="container">
 
-      <!-- Off-day card (Sundays) -->
-      <div id="m-offday" class="offday-card" hidden>
-        <div class="offday-emoji" aria-hidden="true">🌿</div>
-        <h2>It&rsquo;s your off day</h2>
-        <p class="muted">No sessions today &mdash; rest, recharge, and enjoy. See you tomorrow!</p>
-      </div>
+      <nav class="m-tabs" role="tablist">
+        <button class="m-tab is-active" data-mtab="study" role="tab">Today&rsquo;s Study</button>
+        <button class="m-tab" data-mtab="help" role="tab">Help <span class="m-tab-pip" id="m-help-pip" hidden></span></button>
+      </nav>
 
-      <!-- Progress ring -->
-      <div id="m-progress-card" class="progress-card" hidden>
-        <div class="progress-ring" aria-hidden="true">
-          <svg viewBox="0 0 120 120">
-            <circle class="ring-track" cx="60" cy="60" r="52"></circle>
-            <circle class="ring-fill" id="m-ring" cx="60" cy="60" r="52"
-                    transform="rotate(-90 60 60)"></circle>
-          </svg>
-          <div class="progress-center">
-            <span class="progress-count" id="m-progress-count">0/3</span>
-            <span class="progress-label">sessions</span>
+      <!-- TAB: Study -->
+      <div class="m-tab-panel is-active" data-mpanel="study">
+
+        <!-- Off-day card (Sundays) -->
+        <div id="m-offday" class="offday-card" hidden>
+          <div class="offday-emoji" aria-hidden="true">🌿</div>
+          <h2>It&rsquo;s your off day</h2>
+          <p class="muted">No sessions today &mdash; rest, recharge, and enjoy. See you tomorrow!</p>
+        </div>
+
+        <!-- Progress ring -->
+        <div id="m-progress-card" class="progress-card" hidden>
+          <div class="progress-ring" aria-hidden="true">
+            <svg viewBox="0 0 120 120">
+              <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+              <circle class="ring-fill" id="m-ring" cx="60" cy="60" r="52"
+                      transform="rotate(-90 60 60)"></circle>
+            </svg>
+            <div class="progress-center">
+              <span class="progress-count" id="m-progress-count">0/3</span>
+              <span class="progress-label">sessions</span>
+            </div>
+          </div>
+          <div class="progress-copy">
+            <h2 id="m-progress-title">Let&rsquo;s get started</h2>
+            <p class="muted" id="m-progress-msg">Log a session below when you finish studying.</p>
+            <div class="progress-badges" id="m-badges"></div>
           </div>
         </div>
-        <div class="progress-copy">
-          <h2 id="m-progress-title">Let&rsquo;s get started</h2>
-          <p class="muted" id="m-progress-msg">Log a session below when you finish studying.</p>
-          <div class="progress-badges" id="m-badges"></div>
-        </div>
+
+        <!-- Today's slots + forms -->
+        <div id="m-slots" class="slots"></div>
+
       </div>
 
-      <!-- Today's slots + forms -->
-      <div id="m-slots" class="slots"></div>
+      <!-- TAB: Help -->
+      <div class="m-tab-panel" data-mpanel="help" hidden>
+
+        <div class="help-panel-section">
+          <div class="panel-head">
+            <h3>My Questions</h3>
+          </div>
+          <div id="m-flags-list"></div>
+          <div class="flag-new-wrap">
+            <button class="btn btn--student" id="m-add-flag-btn">+ Flag something I don&rsquo;t understand</button>
+            <form class="flag-form" id="m-flag-form" hidden>
+              <textarea class="text-input flag-input" id="m-flag-text" rows="3"
+                placeholder="What didn&rsquo;t you understand? e.g. &ldquo;I didn&rsquo;t get how mitosis differs from meiosis&rdquo;"></textarea>
+              <div class="flag-form-actions">
+                <button type="submit" class="btn btn--student">Submit Flag</button>
+                <button type="button" class="btn btn--ghost" id="m-flag-cancel">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="help-panel-section">
+          <div class="panel-head">
+            <h3>Help for You</h3>
+          </div>
+          <div id="m-help-board" class="help-board"></div>
+        </div>
+
+      </div>
 
     </main>
 
@@ -172,6 +212,7 @@
         <button class="tab" data-tab="history" role="tab">History</button>
         <button class="tab" data-tab="subjects" role="tab">Subjects</button>
         <button class="tab" data-tab="search" role="tab">Search</button>
+        <button class="tab" data-tab="help" role="tab">Help Requests</button>
       </nav>
 
       <!-- TAB: Overview (heatmap) -->
@@ -240,6 +281,42 @@
                    placeholder="Search topics & descriptions, e.g. &ldquo;Photosynthesis&rdquo;" />
           </div>
           <div id="f-search-results" class="entry-list"></div>
+        </div>
+      </section>
+
+      <!-- TAB: Help Requests -->
+      <section class="tab-panel" data-panel="help" hidden>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-head">
+            <h3>Add Study Material</h3>
+          </div>
+          <form id="f-help-form" class="help-add-form">
+            <div class="field">
+              <label>Title</label>
+              <input type="text" class="text-input" id="f-help-title" placeholder="e.g. Cell Division &mdash; Detailed Notes" />
+            </div>
+            <div class="field">
+              <label>Google Drive / YouTube Link</label>
+              <input type="url" class="text-input" id="f-help-url" placeholder="https://drive.google.com/&hellip;" />
+            </div>
+            <p class="gate-error" id="f-help-error" hidden>Please fill in both title and link.</p>
+            <p class="f-help-success" id="f-help-success" hidden>&#10003; Material added to Minahil&rsquo;s board!</p>
+            <button type="submit" class="btn btn--primary">Add Material to Board</button>
+          </form>
+        </div>
+
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-head">
+            <h3>Help Requests from Minahil</h3>
+          </div>
+          <div id="f-flags-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>All Materials on Board</h3>
+          </div>
+          <div id="f-help-list"></div>
         </div>
       </section>
 
