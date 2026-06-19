@@ -499,6 +499,12 @@ h1, h2, h3 { font-family: "Fraunces", Georgia, serif; font-weight: 600; letter-s
   border: none; border-top: 1px solid var(--line-2);
 }
 
+.help-material-foot { padding: 11px 16px; border-top: 1px solid var(--line-2); }
+.help-open-link { color: var(--student); font-size: .82rem; font-weight: 600; text-decoration: none; }
+.help-open-link:hover { text-decoration: underline; }
+
+.field-hint { font-size: .78rem; margin: 3px 0 0; line-height: 1.4; }
+
 .help-add-form { display: grid; gap: 14px; }
 .f-help-success {
   color: var(--ok); font-size: .88rem; font-weight: 600;

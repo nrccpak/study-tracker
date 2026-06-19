@@ -165,6 +165,8 @@ function enterMinahil() {
 
   if (!isConfigured()) { renderConfigWarningMinahil(); return; }
 
+  loadHelpData(false);   // quiet load so the Help tab shows a "new materials" badge
+
   const daySchedule = SCHEDULE[info.dayName];
   if (!daySchedule) {            // Sunday / off day
     $("#m-offday").hidden = false;
@@ -662,9 +664,18 @@ function convertToEmbedUrl(url) {
   return url;
 }
 
-async function loadFlagsAndHelp() {
+function helpSeenCount() {
+  try { return parseInt(localStorage.getItem("st_help_seen") || "0", 10) || 0; } catch (_) { return 0; }
+}
+function setHelpSeen(n) {
+  try { localStorage.setItem("st_help_seen", String(n)); } catch (_) {}
+}
+
+// markSeen=true when Minahil is actually viewing the Help tab (clears the badge);
+// markSeen=false for a quiet background load that only refreshes the "new" badge.
+async function loadHelpData(markSeen) {
   if (!isConfigured()) return;
-  net("Loading…");
+  if (markSeen) net("Loading…");
   try {
     const [flagsRes, helpRes] = await Promise.all([
       apiGet({ action: "getFlags" }),
@@ -674,9 +685,19 @@ async function loadFlagsAndHelp() {
     state.helpItems = (helpRes  && helpRes.items)  ? helpRes.items  : [];
     renderFlags();
     renderHelpBoard();
-    net(null);
+
+    const pip = $("#m-help-pip");
+    if (markSeen) {
+      setHelpSeen(state.helpItems.length);
+      if (pip) pip.hidden = true;
+      net(null);
+    } else if (pip) {
+      const unseen = Math.max(0, state.helpItems.length - helpSeenCount());
+      pip.hidden = unseen === 0;
+      pip.textContent = unseen;
+    }
   } catch (err) {
-    net("Couldn't load help data.", "error");
+    if (markSeen) net("Couldn't load help data.", "error");
   }
 }
 
@@ -711,9 +732,6 @@ function renderFlags() {
       btn.addEventListener("click", showFlagForm);
     });
   }
-  const pending = state.flags.filter(function (f) { return f.status === "pending"; }).length;
-  const pip = $("#m-help-pip");
-  if (pip) { pip.hidden = !pending; pip.textContent = pending; }
 }
 
 function renderHelpBoard() {
@@ -735,6 +753,9 @@ function renderHelpBoard() {
       '</div>' +
       '<div class="help-iframe-wrap">' +
         '<iframe src="' + escapeHtml(embedUrl) + '" class="help-iframe" allowfullscreen loading="lazy" title="' + escapeHtml(item.title) + '"></iframe>' +
+      '</div>' +
+      '<div class="help-material-foot">' +
+        '<a href="' + escapeHtml(item.driveLink) + '" target="_blank" rel="noopener noreferrer" class="help-open-link">Can&rsquo;t see it above? Open in a new tab ↗</a>' +
       '</div>' +
     '</div>';
   }).join("");
@@ -919,7 +940,7 @@ function bind() {
         const on = p.dataset.mpanel === name;
         p.classList.toggle("is-active", on); p.hidden = !on;
       });
-      if (name === "help") loadFlagsAndHelp();
+      if (name === "help") loadHelpData(true);
     });
   });
 
@@ -927,6 +948,7 @@ function bind() {
   $("#m-flag-form").addEventListener("submit", submitFlag);
   $("#m-add-flag-btn").addEventListener("click", showFlagForm);
   $("#m-flag-cancel").addEventListener("click", hideFlagForm);
+  $("#m-help-refresh").addEventListener("click", function () { loadHelpData(true); });
 
   // help material form (Fiaz)
   $("#f-help-form").addEventListener("submit", submitHelpMaterial);
