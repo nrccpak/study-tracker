@@ -220,6 +220,7 @@ function buildSlotCard(slot, subjects) {
     '<div class="slot-head">' +
       '<h3>' + escapeHtml(slot.label) + '</h3>' +
       '<span class="slot-time">' + escapeHtml(slot.time) + '</span>' +
+      '<span class="slot-done-badge">&#10003; logged</span>' +
     '</div>' +
     '<p class="slot-subjects-hint">Today: ' + subjects.map(escapeHtml).join(" · ") + '</p>' +
     '<form class="slot-form" novalidate>' +
@@ -335,6 +336,7 @@ function refreshProgress() {
   // ring
   const C = 2 * Math.PI * 52;
   $("#m-ring").style.strokeDashoffset = String(C * (1 - count / 3));
+  $("#m-ring").classList.toggle("is-done", count === 3);
   $("#m-progress-count").textContent = count + "/3";
 
   // copy
@@ -570,7 +572,7 @@ function entryHtml(e, highlight) {
     '<span class="entry-dot ' + (ot ? "ontime" : "late") + '"></span>' +
     '<div class="entry-main">' +
       '<div class="entry-top">' +
-        '<span class="entry-subject">' + escapeHtml(e.subject) + '</span>' +
+        '<span class="entry-subject" data-subject="' + escapeHtml(e.subject) + '">' + escapeHtml(e.subject) + '</span>' +
         '<span class="entry-tag">' + escapeHtml(e.activity) + '</span>' + conf +
       '</div>' +
       '<p class="entry-topic">' + topic + '</p>' +

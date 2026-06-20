@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1f7a6b" />
+  <title>Study Tracker</title>
+
+  <!-- Font pairing: Bricolage Grotesque (display) + Plus Jakarta Sans (UI) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ============================================================
+       LANDING
+       ============================================================ -->
+  <section id="landing" class="screen is-active">
+    <div class="landing-card">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6.5A2.5 2.5 0 0 1 5.5 4H11v15.5H5.5A2.5 2.5 0 0 1 3 17Z"/>
+            <path d="M21 6.5A2.5 2.5 0 0 0 18.5 4H13v15.5h5.5A2.5 2.5 0 0 0 21 17Z"/>
+          </svg>
+        </div>
+        <h1 class="brand-title">Study Tracker</h1>
+        <p class="brand-sub">Summer 2026 &middot; Class 9</p>
+      </div>
+
+      <div class="role-grid">
+        <button class="role-btn role-btn--student" data-role="minahil">
+          <span class="role-avatar">M</span>
+          <span class="role-text">
+            <span class="role-name" data-bind="studentName">Minahil</span>
+            <span class="role-desc">Log today&rsquo;s study</span>
+          </span>
+          <span class="role-arrow" aria-hidden="true">&rarr;</span>
+        </button>
+
+        <button class="role-btn role-btn--parent" data-role="fiaz">
+          <span class="role-avatar">F</span>
+          <span class="role-text">
+            <span class="role-name" data-bind="parentName">Fiaz</span>
+            <span class="role-desc">View dashboard</span>
+          </span>
+          <span class="role-arrow" aria-hidden="true">&rarr;</span>
+        </button>
+      </div>
+
+      <p class="landing-foot">A private family tracker</p>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PASSWORD GATE (overlay, reused for both roles)
+       ============================================================ -->
+  <div id="gate" class="gate" hidden>
+    <div class="gate-card" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+      <button class="gate-close" data-close-gate aria-label="Close">&times;</button>
+      <div class="gate-avatar" id="gate-avatar">M</div>
+      <h2 class="gate-title" id="gate-title">Welcome back</h2>
+      <p class="gate-sub muted" id="gate-sub">Enter your password to continue.</p>
+      <form id="gate-form" autocomplete="off">
+        <input type="password" id="gate-input" class="gate-input"
+               placeholder="Password" autocomplete="current-password" />
+        <p class="gate-error" id="gate-error" hidden>That password doesn&rsquo;t match. Try again.</p>
+        <button type="submit" class="btn btn--primary btn--block">Unlock</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MINAHIL'S VIEW
+       ============================================================ -->
+  <section id="view-minahil" class="screen view view--student" hidden>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-id">
+          <span class="topbar-avatar">M</span>
+          <div>
+            <p class="topbar-hello" id="m-greeting">Hello, Minahil</p>
+            <p class="topbar-date" id="m-date">&nbsp;</p>
+          </div>
+        </div>
+        <button class="btn btn--ghost btn--small" data-logout>Sign out</button>
+      </div>
+    </header>
+
+    <main class="container">
+
+      <nav class="m-tabs" role="tablist">
+        <button class="m-tab is-active" data-mtab="study" role="tab">Today&rsquo;s Study</button>
+        <button class="m-tab" data-mtab="help" role="tab">Help <span class="m-tab-pip" id="m-help-pip" hidden></span></button>
+      </nav>
+
+      <!-- TAB: Study -->
+      <div class="m-tab-panel is-active" data-mpanel="study">
+
+        <!-- Off-day card (Sundays) -->
+        <div id="m-offday" class="offday-card" hidden>
+          <div class="offday-emoji" aria-hidden="true">🌿</div>
+          <h2>It&rsquo;s your off day</h2>
+          <p class="muted">No sessions today &mdash; rest, recharge, and enjoy. See you tomorrow!</p>
+        </div>
+
+        <!-- Progress ring -->
+        <div id="m-progress-card" class="progress-card" hidden>
+          <div class="progress-ring" aria-hidden="true">
+            <svg viewBox="0 0 120 120">
+              <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+              <circle class="ring-fill" id="m-ring" cx="60" cy="60" r="52"
+                      transform="rotate(-90 60 60)"></circle>
+            </svg>
+            <div class="progress-center">
+              <span class="progress-count" id="m-progress-count">0/3</span>
+              <span class="progress-label">sessions</span>
+            </div>
+          </div>
+          <div class="progress-copy">
+            <h2 id="m-progress-title">Let&rsquo;s get started</h2>
+            <p class="muted" id="m-progress-msg">Log a session below when you finish studying.</p>
+            <div class="progress-badges" id="m-badges"></div>
+          </div>
+        </div>
+
+        <!-- Today's slots + forms -->
+        <div id="m-slots" class="slots"></div>
+
+      </div>
+
+      <!-- TAB: Help -->
+      <div class="m-tab-panel" data-mpanel="help" hidden>
+
+        <div class="help-panel-section">
+          <div class="panel-head">
+            <h3>My Questions</h3>
+          </div>
+          <div id="m-flags-list"></div>
+          <div class="flag-new-wrap">
+            <button class="btn btn--student" id="m-add-flag-btn">+ Flag something I don&rsquo;t understand</button>
+            <form class="flag-form" id="m-flag-form" hidden>
+              <textarea class="text-input flag-input" id="m-flag-text" rows="3"
+                placeholder="What didn&rsquo;t you understand? e.g. &ldquo;I didn&rsquo;t get how mitosis differs from meiosis&rdquo;"></textarea>
+              <div class="flag-form-actions">
+                <button type="submit" class="btn btn--student">Submit Flag</button>
+                <button type="button" class="btn btn--ghost" id="m-flag-cancel">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="help-panel-section">
+          <div class="panel-head">
+            <h3>Help for You</h3>
+            <button class="btn btn--ghost btn--small" id="m-help-refresh">Refresh</button>
+          </div>
+          <div id="m-help-board" class="help-board"></div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Success toast with Undo -->
+    <div id="toast" class="toast" hidden>
+      <span class="toast-icon" aria-hidden="true">✓</span>
+      <span class="toast-text" id="toast-text">Saved!</span>
+      <button class="toast-undo" id="toast-undo" hidden>Undo</button>
+    </div>
+
+    <!-- Confetti layer -->
+    <canvas id="confetti" class="confetti"></canvas>
+  </section>
+
+  <!-- ============================================================
+       FIAZ'S DASHBOARD
+       ============================================================ -->
+  <section id="view-fiaz" class="screen view view--parent" hidden>
+    <header class="topbar topbar--dash">
+      <div class="topbar-inner">
+        <div class="topbar-id">
+          <span class="topbar-avatar topbar-avatar--parent">F</span>
+          <div>
+            <p class="topbar-hello">Dashboard</p>
+            <p class="topbar-date" id="f-subtitle">Minahil&rsquo;s study record</p>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn--ghost btn--small" data-refresh>Refresh</button>
+          <button class="btn btn--ghost btn--small" data-logout>Sign out</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container container--wide">
+
+      <!-- Stat summary -->
+      <div class="stat-row" id="f-stats">
+        <div class="stat-card"><span class="stat-num" id="stat-total">—</span><span class="stat-lbl">Total entries</span></div>
+        <div class="stat-card"><span class="stat-num" id="stat-week">—</span><span class="stat-lbl">This week</span></div>
+        <div class="stat-card"><span class="stat-num" id="stat-ontime">—</span><span class="stat-lbl">On-time (week)</span></div>
+        <div class="stat-card"><span class="stat-num" id="stat-streak">—</span><span class="stat-lbl">Day streak</span></div>
+      </div>
+
+      <!-- Tabs -->
+      <nav class="tabs" role="tablist">
+        <button class="tab is-active" data-tab="overview" role="tab">Overview</button>
+        <button class="tab" data-tab="history" role="tab">History</button>
+        <button class="tab" data-tab="subjects" role="tab">Subjects</button>
+        <button class="tab" data-tab="search" role="tab">Search</button>
+        <button class="tab" data-tab="help" role="tab">Help Requests</button>
+      </nav>
+
+      <!-- TAB: Overview (heatmap) -->
+      <section class="tab-panel is-active" data-panel="overview">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Activity heatmap</h3>
+            <div class="legend">
+              <span class="legend-lbl">Less</span>
+              <span class="legend-cell lv0"></span>
+              <span class="legend-cell lv1"></span>
+              <span class="legend-cell lv2"></span>
+              <span class="legend-cell lv3"></span>
+              <span class="legend-lbl">More</span>
+            </div>
+          </div>
+          <div class="heatmap-wrap">
+            <div id="f-heatmap" class="heatmap"></div>
+          </div>
+          <p class="panel-note muted">Each square is a day. Colour shows how many of the 3 sessions were logged. Click a day to see its entries.</p>
+          <div id="f-daydetail" class="day-detail" hidden></div>
+        </div>
+      </section>
+
+      <!-- TAB: History -->
+      <section class="tab-panel" data-panel="history" hidden>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>History</h3>
+            <div class="segmented" id="f-range">
+              <button class="seg is-active" data-range="day">Day</button>
+              <button class="seg" data-range="week">Week</button>
+              <button class="seg" data-range="month">Month</button>
+              <button class="seg" data-range="all">All</button>
+            </div>
+          </div>
+          <div class="range-nav" id="f-range-nav">
+            <button class="btn btn--ghost btn--small" data-step="-1">&larr;</button>
+            <span id="f-range-label" class="range-label">—</span>
+            <button class="btn btn--ghost btn--small" data-step="1">&rarr;</button>
+          </div>
+          <div id="f-history" class="entry-list"></div>
+        </div>
+      </section>
+
+      <!-- TAB: Subjects -->
+      <section class="tab-panel" data-panel="subjects" hidden>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Subject coverage</h3>
+            <select id="f-subject" class="select"></select>
+          </div>
+          <p class="panel-note muted">A running, chronological record of everything logged for the selected subject.</p>
+          <div id="f-subject-list" class="entry-list entry-list--timeline"></div>
+        </div>
+      </section>
+
+      <!-- TAB: Search -->
+      <section class="tab-panel" data-panel="search" hidden>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Search topics</h3>
+          </div>
+          <div class="search-box">
+            <input type="search" id="f-search" class="search-input"
+                   placeholder="Search topics & descriptions, e.g. &ldquo;Photosynthesis&rdquo;" />
+          </div>
+          <div id="f-search-results" class="entry-list"></div>
+        </div>
+      </section>
+
+      <!-- TAB: Help Requests -->
+      <section class="tab-panel" data-panel="help" hidden>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-head">
+            <h3>Add Study Material</h3>
+          </div>
+          <form id="f-help-form" class="help-add-form">
+            <div class="field">
+              <label>Title</label>
+              <input type="text" class="text-input" id="f-help-title" placeholder="e.g. Cell Division &mdash; Detailed Notes" />
+            </div>
+            <div class="field">
+              <label>Google Drive / YouTube Link</label>
+              <input type="url" class="text-input" id="f-help-url" placeholder="https://drive.google.com/&hellip;" />
+              <p class="field-hint muted">Tip: in Google Drive, set the file&rsquo;s sharing to <strong>&ldquo;Anyone with the link&rdquo;</strong> so Minahil can open it.</p>
+            </div>
+            <p class="gate-error" id="f-help-error" hidden>Please fill in both title and link.</p>
+            <p class="f-help-success" id="f-help-success" hidden>&#10003; Material added to Minahil&rsquo;s board!</p>
+            <button type="submit" class="btn btn--primary">Add Material to Board</button>
+          </form>
+        </div>
+
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-head">
+            <h3>Help Requests from Minahil</h3>
+          </div>
+          <div id="f-flags-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>All Materials on Board</h3>
+          </div>
+          <div id="f-help-list"></div>
+        </div>
+      </section>
+
+    </main>
+  </section>
+
+  <!-- Global loading / error strip -->
+  <div id="netbar" class="netbar" hidden></div>
+
+</div>
+
+<script src="config.js"></script>
+<script src="schedule.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
