@@ -214,6 +214,7 @@
         <button class="tab" data-tab="subjects" role="tab">Subjects</button>
         <button class="tab" data-tab="search" role="tab">Search</button>
         <button class="tab" data-tab="help" role="tab">Help Requests</button>
+        <button class="tab" data-tab="tests" role="tab">📝 Tests</button>
       </nav>
 
       <!-- TAB: Overview (heatmap) -->
@@ -320,6 +321,60 @@
           </div>
           <div id="f-help-list"></div>
         </div>
+      </section>
+
+      <!-- TAB: Tests (Saturday) -->
+      <section class="tab-panel" data-panel="tests" hidden>
+
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-head">
+            <h3>Upload Test</h3>
+            <span class="test-saturday-label" id="f-test-sat-label"></span>
+          </div>
+          <form id="f-test-form" class="help-add-form">
+            <div class="field">
+              <label>Subject</label>
+              <select class="select" id="f-test-subject">
+                <option value="" disabled selected>Choose a subject&hellip;</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Test Title</label>
+              <input type="text" class="text-input" id="f-test-title"
+                     placeholder="e.g. Chapter 3 &mdash; Short Questions" />
+            </div>
+            <div class="field">
+              <label>Questions / Content <span class="opt">(optional if using a link)</span></label>
+              <textarea class="text-input" id="f-test-content" rows="5"
+                placeholder="Type the test questions here&hellip;"></textarea>
+            </div>
+            <div class="field">
+              <label>Google Drive Link <span class="opt">(optional)</span></label>
+              <input type="url" class="text-input" id="f-test-link"
+                     placeholder="https://drive.google.com/&hellip;" />
+              <p class="field-hint muted">Set sharing to <strong>&ldquo;Anyone with the link&rdquo;</strong> so Minahil can open it.</p>
+            </div>
+            <p class="gate-error" id="f-test-error" hidden>Please select a subject and add a title.</p>
+            <p class="f-help-success" id="f-test-success" hidden>&#10003; Test uploaded for Saturday!</p>
+            <button type="submit" class="btn btn--primary">Upload Test</button>
+          </form>
+        </div>
+
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-head">
+            <h3>This Saturday&rsquo;s Tests</h3>
+            <button class="btn btn--ghost btn--small" id="f-tests-refresh">Refresh</button>
+          </div>
+          <div id="f-tests-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Minahil&rsquo;s Answers</h3>
+          </div>
+          <div id="f-test-answers-list"></div>
+        </div>
+
       </section>
 
     </main>
