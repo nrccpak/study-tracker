@@ -13,7 +13,8 @@ const SUBJECTS = [
   "English",
   "Urdu",
   "Islamiat",
-  "Tarjuma-tul-Quran"
+  "Tarjuma-tul-Quran",
+  "Pakistan Study"
 ];
 
 const ACTIVITY_TYPES = [
@@ -37,14 +38,20 @@ const SLOTS = [
 const ON_TIME_BUFFER_MIN = 15;
 
 // Weekly rotation: which subject(s) belong to each slot on each day.
-// Sunday is OFF (null) — no slots, no submissions expected.
+// Sunday  → null        (off day, no sessions)
+// Saturday → "TEST_DAY" (dedicated test / exam day, no regular sessions)
+//
+// Pairings:
+//   English + Tarjuma-tul-Quran  → always in the same slot
+//   Urdu    + Islamiat            → always in the same slot
+//   Pakistan Study                → 3 days, one dedicated full slot per day
 const SCHEDULE = {
-  Monday:    { S1: ["Maths", "Physics"],   S2: ["Biology"], S3: ["Urdu", "Islamiat"] },
-  Tuesday:   { S1: ["Maths", "Chemistry"], S2: ["English"], S3: ["Tarjuma-tul-Quran", "Urdu"] },
-  Wednesday: { S1: ["Maths", "Physics"],   S2: ["Biology"], S3: ["Islamiat", "Tarjuma-tul-Quran"] },
-  Thursday:  { S1: ["Maths", "Chemistry"], S2: ["English"], S3: ["Urdu", "Islamiat"] },
-  Friday:    { S1: ["Maths", "Physics"],   S2: ["Biology"], S3: ["Tarjuma-tul-Quran", "Urdu"] },
-  Saturday:  { S1: ["Maths", "Chemistry"], S2: ["English"], S3: ["Islamiat", "Tarjuma-tul-Quran"] },
+  Monday:    { S1: ["Maths"],     S2: ["Physics"],            S3: ["Pakistan Study"] },
+  Tuesday:   { S1: ["Biology"],   S2: ["Urdu", "Islamiat"],   S3: ["English", "Tarjuma-tul-Quran"] },
+  Wednesday: { S1: ["Chemistry"], S2: ["Maths"],              S3: ["Pakistan Study"] },
+  Thursday:  { S1: ["Physics"],   S2: ["Urdu", "Islamiat"],   S3: ["English", "Tarjuma-tul-Quran"] },
+  Friday:    { S1: ["Biology"],   S2: ["Chemistry"],          S3: ["Pakistan Study"] },
+  Saturday:  "TEST_DAY",
   Sunday:    null
 };
 

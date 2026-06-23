@@ -14,6 +14,8 @@ const state = {
   entries: [],           // Fiaz: all entries
   flags: [],             // shared: help flags from Minahil
   helpItems: [],         // shared: study materials from Fiaz
+  tests: [],             // Saturday tests uploaded by Fiaz
+  testAnswers: [],       // Minahil's submitted test answers
   hist: { range: "week", anchor: new Date() },
   selectedDay: null
 };
@@ -174,6 +176,13 @@ function enterMinahil() {
     $("#m-slots").innerHTML = "";
     return;
   }
+  if (daySchedule === "TEST_DAY") {   // Saturday — test day
+    $("#m-offday").hidden = true;
+    $("#m-progress-card").hidden = true;
+    $("#m-slots").innerHTML = "";
+    buildTestDayMinahil();
+    return;
+  }
   $("#m-offday").hidden = true;
   $("#m-progress-card").hidden = false;
   buildSlots(daySchedule);
@@ -196,6 +205,125 @@ function buildSlots(daySchedule) {
   const wrap = $("#m-slots");
   wrap.innerHTML = "";
   SLOTS.forEach(function (slot) { wrap.appendChild(buildSlotCard(slot, daySchedule[slot.id] || [])); });
+}
+
+/* =============================================================
+   SATURDAY — TEST DAY (Minahil)
+   ============================================================= */
+function buildTestDayMinahil() {
+  const wrap = $("#m-slots");
+  wrap.innerHTML =
+    '<div class="testday-banner">' +
+      '<span class="testday-icon" aria-hidden="true">📝</span>' +
+      '<h2>Test Day</h2>' +
+      '<p class="muted">Complete the tests below and submit your answers.</p>' +
+    '</div>' +
+    '<div id="m-test-cards" class="test-cards">' +
+      '<div class="loading-row"><span class="spinner"></span></div>' +
+    '</div>';
+  loadTestsForMinahil();
+}
+
+async function loadTestsForMinahil() {
+  if (!isConfigured()) {
+    const host = $("#m-test-cards");
+    if (host) host.innerHTML = configWarningHtml();
+    return;
+  }
+  const info = todayInfo();
+  try {
+    const [testsRes, answersRes] = await Promise.all([
+      apiGet({ action: "getTests", date: info.dateStr }),
+      apiGet({ action: "getTestAnswers", date: info.dateStr })
+    ]);
+    state.tests       = (testsRes  && testsRes.tests)   ? testsRes.tests   : [];
+    state.testAnswers = (answersRes && answersRes.answers) ? answersRes.answers : [];
+    renderTestsForMinahil();
+  } catch (err) {
+    const host = $("#m-test-cards");
+    if (host) host.innerHTML = '<div class="empty">Could not load tests. Check your connection.</div>';
+  }
+}
+
+function renderTestsForMinahil() {
+  const host = $("#m-test-cards");
+  if (!host) return;
+  const answeredIds = new Set(state.testAnswers.map(function (a) { return a.testId; }));
+
+  if (!state.tests.length) {
+    host.innerHTML = '<div class="empty">No tests uploaded for today yet.<br>Ask Fiaz to upload them from the dashboard.</div>';
+    return;
+  }
+
+  host.innerHTML = state.tests.map(function (test) {
+    const answered = answeredIds.has(test.id);
+    const embedUrl = test.link ? convertToEmbedUrl(test.link) : "";
+    return '<div class="test-card" data-test-id="' + escapeHtml(test.id) + '">' +
+      '<div class="test-card-head">' +
+        '<span class="entry-subject" data-subject="' + escapeHtml(test.subject) + '">' + escapeHtml(test.subject) + '</span>' +
+        (answered
+          ? '<span class="test-submitted-badge">&#10003; Submitted</span>'
+          : '<span class="test-pending-badge">Pending</span>') +
+      '</div>' +
+      '<h3 class="test-card-title">' + escapeHtml(test.title) + '</h3>' +
+      (test.content
+        ? '<div class="test-content"><pre class="test-questions">' + escapeHtml(test.content) + '</pre></div>'
+        : '') +
+      (embedUrl
+        ? '<div class="help-iframe-wrap"><iframe src="' + escapeHtml(embedUrl) + '" class="help-iframe" allowfullscreen loading="lazy" title="' + escapeHtml(test.title) + '"></iframe></div>' +
+          '<div class="help-material-foot"><a href="' + escapeHtml(test.link) + '" target="_blank" rel="noopener noreferrer" class="help-open-link">Can\'t see it? Open in a new tab ↗</a></div>'
+        : '') +
+      (answered
+        ? '<div class="test-answer-submitted"><p class="muted">Your answers have been submitted for this test.</p></div>'
+        : '<div class="test-answer-area">' +
+            '<div class="field"><label>Your Answers</label>' +
+              '<textarea class="text-input ta-answer" rows="4" placeholder="Type your answers here…"></textarea>' +
+            '</div>' +
+            '<div class="field"><label>Or upload to Google Drive and paste link <span class="opt">(optional)</span></label>' +
+              '<input type="url" class="text-input ta-answer-link" placeholder="https://drive.google.com/…" />' +
+            '</div>' +
+            '<p class="gate-error ta-error" hidden>Please write your answers or paste a Drive link.</p>' +
+            '<button class="btn btn--student ta-submit">Submit Answers</button>' +
+          '</div>') +
+    '</div>';
+  }).join("");
+
+  $$(".ta-submit", host).forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const card = btn.closest(".test-card");
+      const testId = card.dataset.testId;
+      const test = state.tests.find(function (t) { return t.id === testId; });
+      const answers = $(".ta-answer", card).value.trim();
+      const answerLink = $(".ta-answer-link", card).value.trim();
+      const errEl = $(".ta-error", card);
+      if (!answers && !answerLink) { errEl.hidden = false; return; }
+      errEl.hidden = true;
+      submitTestAnswer(test, answers, answerLink, btn);
+    });
+  });
+}
+
+async function submitTestAnswer(test, answers, answerLink, btnEl) {
+  btnEl.disabled = true; btnEl.textContent = "Submitting…";
+  const info = todayInfo();
+  try {
+    const res = await apiPost({
+      action:     "submitTestAnswer",
+      testId:     test.id,
+      date:       info.dateStr,
+      subject:    test.subject,
+      answers:    answers,
+      answerLink: answerLink
+    });
+    if (!res || !res.ok) throw new Error(res && res.error ? res.error : "Failed");
+    state.testAnswers.push(res.answer || { testId: test.id, subject: test.subject });
+    if (!REDUCED) burstConfetti();
+    showToast("Answers submitted! Good work.", false);
+    renderTestsForMinahil();
+  } catch (err) {
+    net("Couldn't submit answers: " + err.message, "error");
+    btnEl.disabled = false; btnEl.textContent = "Submit Answers";
+  }
 }
 
 function buildSlotCard(slot, subjects) {
@@ -490,12 +618,13 @@ function renderStats() {
 }
 
 function computeStreak() {
-  // count back over study days (Sun = off, skipped, doesn't break the streak)
+  // count back over study days; Sun & Sat are non-study days (off/test), skipped without breaking streak
   let streak = 0, cur = new Date(); cur.setHours(0,0,0,0);
-  if (slotsLoggedOn(dateKey(cur)) === 0 && DAY_NAMES[cur.getDay()] !== "Sunday") cur = addDays(cur, -1);
+  const dn0 = DAY_NAMES[cur.getDay()];
+  if (slotsLoggedOn(dateKey(cur)) === 0 && dn0 !== "Sunday" && dn0 !== "Saturday") cur = addDays(cur, -1);
   for (let i = 0; i < 400; i++) {
     const dn = DAY_NAMES[cur.getDay()];
-    if (dn === "Sunday") { cur = addDays(cur, -1); continue; }
+    if (dn === "Sunday" || dn === "Saturday") { cur = addDays(cur, -1); continue; }
     if (slotsLoggedOn(dateKey(cur)) > 0) { streak++; cur = addDays(cur, -1); }
     else break;
   }
@@ -530,6 +659,8 @@ function renderHeatmap() {
       const key = dateKey(cursor);
       if (cursor.getDay() === 0) {
         html += '<div class="hm-cell is-off" title="' + fmtShortDate(cursor) + ' · off day"></div>';
+      } else if (cursor.getDay() === 6) {
+        html += '<div class="hm-cell is-test" data-date="' + key + '" title="' + fmtShortDate(cursor) + ' · Test Day"></div>';
       } else {
         const n = slotsLoggedOn(key);
         html += '<div class="hm-cell ' + levelClass(n) + '" data-date="' + key + '" title="' + fmtShortDate(cursor) + ' · ' + n + '/3 sessions"></div>';
@@ -896,6 +1027,138 @@ async function submitHelpMaterial(e) {
 }
 
 /* =============================================================
+   FIAZ — TEST MANAGEMENT
+   ============================================================= */
+
+function getUpcomingSaturday() {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const daysUntilSat = today.getDay() === 6 ? 0 : (6 - today.getDay());
+  return addDays(today, daysUntilSat);
+}
+
+function populateTestSubjectSelect() {
+  const sel = $("#f-test-subject");
+  if (!sel || sel.options.length > 1) return;
+  sel.innerHTML = '<option value="" disabled selected>Choose a subject…</option>' +
+    SUBJECTS.map(function (s) { return '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; }).join("");
+  const satLabel = $("#f-test-sat-label");
+  if (satLabel) satLabel.textContent = "for " + fmtLongDate(getUpcomingSaturday());
+}
+
+async function loadFiazTests() {
+  if (!isConfigured()) return;
+  populateTestSubjectSelect();
+  net("Loading tests…");
+  try {
+    const satKey = dateKey(getUpcomingSaturday());
+    const [testsRes, answersRes] = await Promise.all([
+      apiGet({ action: "getTests",       date: satKey }),
+      apiGet({ action: "getTestAnswers", date: satKey })
+    ]);
+    state.tests       = (testsRes  && testsRes.tests)    ? testsRes.tests    : [];
+    state.testAnswers = (answersRes && answersRes.answers) ? answersRes.answers : [];
+    renderFiazTests();
+    renderFiazTestAnswers();
+    net(null);
+  } catch (err) {
+    net("Couldn't load tests: " + err.message, "error");
+    const host = $("#f-tests-list");
+    if (host) host.innerHTML = '<div class="empty">Could not reach the data source.</div>';
+  }
+}
+
+function renderFiazTests() {
+  const host = $("#f-tests-list");
+  if (!host) return;
+  if (!state.tests.length) {
+    host.innerHTML = '<div class="empty">No tests uploaded for this Saturday yet.</div>';
+    return;
+  }
+  host.innerHTML = state.tests.map(function (test) {
+    const d = test.timestamp ? new Date(test.timestamp) : null;
+    const dateStr = d && !isNaN(d) ? fmtShortDate(d) : "";
+    return '<div class="f-help-item">' +
+      '<div class="f-help-item-info">' +
+        '<span class="f-help-item-title">' +
+          '<span class="entry-subject" data-subject="' + escapeHtml(test.subject) + '" style="margin-right:6px">' + escapeHtml(test.subject) + '</span>' +
+          escapeHtml(test.title) +
+        '</span>' +
+        (dateStr ? '<span class="f-help-item-date">' + escapeHtml(dateStr) + '</span>' : '') +
+      '</div>' +
+      (test.link
+        ? '<a href="' + escapeHtml(test.link) + '" target="_blank" rel="noopener noreferrer" class="btn btn--ghost btn--small">Open ↗</a>'
+        : '') +
+    '</div>';
+  }).join("");
+}
+
+function renderFiazTestAnswers() {
+  const host = $("#f-test-answers-list");
+  if (!host) return;
+  if (!state.testAnswers.length) {
+    host.innerHTML = '<div class="empty">Minahil hasn\'t submitted any answers yet.</div>';
+    return;
+  }
+  host.innerHTML = state.testAnswers.map(function (ans) {
+    const test = state.tests.find(function (t) { return t.id === ans.testId; }) || {};
+    const d = ans.timestamp ? new Date(ans.timestamp) : null;
+    const dateStr = d && !isNaN(d) ? fmtShortDate(d) : "";
+    return '<div class="test-answer-card">' +
+      '<div class="test-card-head">' +
+        '<span class="entry-subject" data-subject="' + escapeHtml(ans.subject || test.subject || "") + '">' + escapeHtml(ans.subject || test.subject || "") + '</span>' +
+        (test.title ? '<span class="f-help-item-title" style="flex:1;margin:0 8px">' + escapeHtml(test.title) + '</span>' : '') +
+        '<span class="test-submitted-badge">&#10003; Submitted</span>' +
+        (dateStr ? '<span class="f-help-item-date">' + escapeHtml(dateStr) + '</span>' : '') +
+      '</div>' +
+      (ans.answers ? '<div class="test-content"><pre class="test-questions">' + escapeHtml(ans.answers) + '</pre></div>' : '') +
+      (ans.answerLink
+        ? '<div class="help-material-foot"><a href="' + escapeHtml(ans.answerLink) + '" target="_blank" rel="noopener noreferrer" class="help-open-link">Open Answer Sheet ↗</a></div>'
+        : '') +
+    '</div>';
+  }).join("");
+}
+
+async function submitTest(e) {
+  e.preventDefault();
+  const subject = $("#f-test-subject").value;
+  const title   = $("#f-test-title").value.trim();
+  const content = $("#f-test-content").value.trim();
+  const link    = $("#f-test-link").value.trim();
+  const errEl   = $("#f-test-error");
+  const okEl    = $("#f-test-success");
+
+  if (!subject || !title) { errEl.hidden = false; okEl.hidden = true; return; }
+  errEl.hidden = true; okEl.hidden = true;
+
+  const btn = $("[type=submit]", e.target);
+  btn.disabled = true; btn.textContent = "Uploading…";
+
+  try {
+    const res = await apiPost({
+      action:  "submitTest",
+      date:    dateKey(getUpcomingSaturday()),
+      subject: subject,
+      title:   title,
+      content: content,
+      link:    link
+    });
+    if (!res || !res.ok) throw new Error(res && res.error ? res.error : "Failed");
+    state.tests.push(res.test || { id: String(Date.now()), subject, title, content, link });
+    $("#f-test-subject").value = "";
+    $("#f-test-title").value = "";
+    $("#f-test-content").value = "";
+    $("#f-test-link").value = "";
+    okEl.hidden = false;
+    setTimeout(function () { okEl.hidden = true; }, 3000);
+    renderFiazTests();
+  } catch (err) {
+    net("Couldn't upload test: " + err.message, "error");
+  } finally {
+    btn.disabled = false; btn.textContent = "Upload Test";
+  }
+}
+
+/* =============================================================
    EVENT WIRING + INIT
    ============================================================= */
 function bind() {
@@ -928,7 +1191,8 @@ function bind() {
         const on = p.dataset.panel === name;
         p.classList.toggle("is-active", on); p.hidden = !on;
       });
-      if (name === "help") loadFiazHelpData();
+      if (name === "help")  loadFiazHelpData();
+      if (name === "tests") loadFiazTests();
     });
   });
 
@@ -954,6 +1218,10 @@ function bind() {
 
   // help material form (Fiaz)
   $("#f-help-form").addEventListener("submit", submitHelpMaterial);
+
+  // test upload form + refresh (Fiaz)
+  $("#f-test-form").addEventListener("submit", submitTest);
+  $("#f-tests-refresh").addEventListener("click", loadFiazTests);
 
   // history range
   $$("#f-range .seg").forEach(function (seg) {

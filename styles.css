@@ -60,6 +60,7 @@
   --s-urdu-c:       oklch(0.60 0.16 6);   --s-urdu-soft:     oklch(0.96 0.05 6);   --s-urdu-b:    oklch(0.88 0.08 6);
   --s-islamiat-c:   oklch(0.64 0.14 72);  --s-islamiat-soft: oklch(0.96 0.04 72);  --s-islamiat-b:oklch(0.89 0.07 72);
   --s-tarjuma-c:    oklch(0.62 0.15 44);  --s-tarjuma-soft:  oklch(0.96 0.04 44);  --s-tarjuma-b: oklch(0.89 0.07 44);
+  --s-pakstudy-c:   oklch(0.46 0.20 145); --s-pakstudy-soft: oklch(0.95 0.06 145); --s-pakstudy-b:oklch(0.83 0.10 145);
 }
 
 /* ── Reset ─────────────────────────────────────────────────── */
@@ -353,7 +354,8 @@ body {
 .chip--subject[data-subject="English"].is-active    { background: var(--s-english-c);  border-color: var(--s-english-c);  color: #fff; box-shadow: 0 3px 10px oklch(0.54 0.15 308 / .3); }
 .chip--subject[data-subject="Urdu"].is-active       { background: var(--s-urdu-c);     border-color: var(--s-urdu-c);     color: #fff; box-shadow: 0 3px 10px oklch(0.60 0.16 6   / .3); }
 .chip--subject[data-subject="Islamiat"].is-active   { background: var(--s-islamiat-c); border-color: var(--s-islamiat-c); color: #fff; box-shadow: 0 3px 10px oklch(0.64 0.14 72  / .3); }
-.chip--subject[data-subject="Tarjuma-tul-Quran"].is-active { background: var(--s-tarjuma-c); border-color: var(--s-tarjuma-c); color: #fff; box-shadow: 0 3px 10px oklch(0.62 0.15 44 / .3); }
+.chip--subject[data-subject="Tarjuma-tul-Quran"].is-active { background: var(--s-tarjuma-c);   border-color: var(--s-tarjuma-c);   color: #fff; box-shadow: 0 3px 10px oklch(0.62 0.15 44  / .3); }
+.chip--subject[data-subject="Pakistan Study"].is-active   { background: var(--s-pakstudy-c); border-color: var(--s-pakstudy-c); color: #fff; box-shadow: 0 3px 10px oklch(0.46 0.20 145 / .3); }
 
 /* Confidence chips */
 .chip--conf[data-conf="Easy"].is-active   { background: oklch(0.60 0.13 152); border-color: oklch(0.60 0.13 152); color: #fff; }
@@ -489,14 +491,15 @@ body {
   font-weight: 700; font-size: .84rem;
   padding: .2rem .65rem; border-radius: 999px;
 }
-.entry-subject[data-subject="Biology"]            { background: var(--s-biology-soft);  color: var(--s-biology-c);  border: 1px solid var(--s-biology-b); }
-.entry-subject[data-subject="Chemistry"]          { background: var(--s-chemistry-soft); color: var(--s-chemistry-c); border: 1px solid var(--s-chemistry-b); }
-.entry-subject[data-subject="Physics"]            { background: var(--s-physics-soft);  color: var(--s-physics-c);  border: 1px solid var(--s-physics-b); }
-.entry-subject[data-subject="Maths"]              { background: var(--s-maths-soft);    color: var(--s-maths-c);    border: 1px solid var(--s-maths-b); }
-.entry-subject[data-subject="English"]            { background: var(--s-english-soft);  color: var(--s-english-c);  border: 1px solid var(--s-english-b); }
-.entry-subject[data-subject="Urdu"]               { background: var(--s-urdu-soft);     color: var(--s-urdu-c);     border: 1px solid var(--s-urdu-b); }
-.entry-subject[data-subject="Islamiat"]           { background: var(--s-islamiat-soft); color: var(--s-islamiat-c); border: 1px solid var(--s-islamiat-b); }
-.entry-subject[data-subject="Tarjuma-tul-Quran"]  { background: var(--s-tarjuma-soft);  color: var(--s-tarjuma-c);  border: 1px solid var(--s-tarjuma-b); }
+.entry-subject[data-subject="Biology"]            { background: var(--s-biology-soft);   color: var(--s-biology-c);   border: 1px solid var(--s-biology-b); }
+.entry-subject[data-subject="Chemistry"]          { background: var(--s-chemistry-soft);  color: var(--s-chemistry-c);  border: 1px solid var(--s-chemistry-b); }
+.entry-subject[data-subject="Physics"]            { background: var(--s-physics-soft);   color: var(--s-physics-c);   border: 1px solid var(--s-physics-b); }
+.entry-subject[data-subject="Maths"]              { background: var(--s-maths-soft);     color: var(--s-maths-c);     border: 1px solid var(--s-maths-b); }
+.entry-subject[data-subject="English"]            { background: var(--s-english-soft);   color: var(--s-english-c);   border: 1px solid var(--s-english-b); }
+.entry-subject[data-subject="Urdu"]               { background: var(--s-urdu-soft);      color: var(--s-urdu-c);      border: 1px solid var(--s-urdu-b); }
+.entry-subject[data-subject="Islamiat"]           { background: var(--s-islamiat-soft);  color: var(--s-islamiat-c);  border: 1px solid var(--s-islamiat-b); }
+.entry-subject[data-subject="Tarjuma-tul-Quran"]  { background: var(--s-tarjuma-soft);   color: var(--s-tarjuma-c);   border: 1px solid var(--s-tarjuma-b); }
+.entry-subject[data-subject="Pakistan Study"]     { background: var(--s-pakstudy-soft);  color: var(--s-pakstudy-c);  border: 1px solid var(--s-pakstudy-b); }
 
 .entry-tag {
   font-size: .7rem; font-weight: 700; padding: .16rem .55rem;
@@ -609,6 +612,63 @@ body {
 .f-help-item-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
 .f-help-item-title { font-weight: 700; font-size: .9rem; overflow-wrap: anywhere; }
 .f-help-item-date { color: var(--muted); font-size: .76rem; }
+
+/* ── Saturday — Test Day heatmap cell ──────────────────────── */
+.hm-cell.is-test {
+  background: repeating-linear-gradient(45deg,#fde68a,#fde68a 3px,#fbbf24 3px,#fbbf24 6px);
+  cursor: pointer;
+}
+.hm-cell.is-test:hover { transform: scale(1.22); }
+
+/* ── Saturday — Test Day banner (Minahil) ───────────────────── */
+.testday-banner {
+  text-align: center;
+  background: linear-gradient(135deg, #fff, var(--surface-2));
+  border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 44px 28px 30px; box-shadow: var(--shadow-m); margin-bottom: 20px;
+}
+.testday-icon { font-size: 3.2rem; display: block; }
+.testday-banner h2 { font-size: 1.7rem; margin: 14px 0 7px; }
+
+/* ── Test cards ─────────────────────────────────────────────── */
+.test-cards { display: grid; gap: 16px; }
+.test-card {
+  background: var(--surface); border: 1.5px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow-s); overflow: hidden;
+}
+.test-card-head {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  padding: 16px 20px 8px;
+}
+.test-card-title { font-size: 1.1rem; padding: 4px 20px 14px; margin: 0; }
+.test-content { padding: 0 20px 16px; }
+.test-questions {
+  background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 12px;
+  padding: 16px; margin: 0; font-family: inherit; font-size: .88rem;
+  white-space: pre-wrap; word-break: break-word; line-height: 1.65; color: var(--ink-soft);
+}
+.test-answer-area {
+  padding: 16px 20px 20px; border-top: 1px solid var(--line-2); display: grid; gap: 12px;
+}
+.test-answer-submitted {
+  padding: 12px 20px; border-top: 1px solid var(--line-2);
+}
+.test-submitted-badge {
+  font-size: .69rem; font-weight: 700; padding: .2rem .52rem; border-radius: 999px;
+  background: oklch(0.60 0.13 152 / .12); color: var(--ok);
+}
+.test-pending-badge {
+  font-size: .69rem; font-weight: 700; padding: .2rem .52rem; border-radius: 999px;
+  background: var(--student-soft); color: var(--student-d);
+}
+.test-saturday-label { color: var(--muted); font-size: .83rem; font-weight: 500; }
+
+/* ── Test answer card (Fiaz view) ───────────────────────────── */
+.test-answer-card {
+  background: var(--surface-2); border: 1px solid var(--line-2);
+  border-radius: 15px; padding: 0 0 4px; margin-bottom: 12px; overflow: hidden;
+}
+.test-answer-card:last-child { margin-bottom: 0; }
 
 /* ── Netbar ─────────────────────────────────────────────────── */
 .netbar {
