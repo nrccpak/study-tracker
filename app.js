@@ -56,6 +56,10 @@ function fmtTime(ms) {
   h = h % 12 || 12;
   return h + ":" + pad2(m) + " " + ap;
 }
+function fmtDateTime(ms) {
+  const d = new Date(ms);
+  return d.getDate() + " " + MONTHS[d.getMonth()] + " " + d.getFullYear() + " · " + fmtTime(ms);
+}
 
 function startOfWeekMon(d) {               // Monday 00:00 of d's week
   const x = new Date(d); const day = (x.getDay() + 6) % 7; // Mon=0..Sun=6
@@ -711,7 +715,7 @@ function entryHtml(e, highlight) {
     '</div>' +
     '<div class="entry-side">' +
       '<span class="badge ' + (ot ? "ontime" : "late") + '">' + (ot ? "On-time" : "Late") + '</span>' +
-      '<span class="entry-time">' + (e._ts ? fmtTime(e._ts) : "") + '</span>' +
+      '<span class="entry-time">' + (e._ts ? fmtDateTime(e._ts) : "") + '</span>' +
     '</div>' +
   '</div>';
 }
