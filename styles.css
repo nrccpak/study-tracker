@@ -697,3 +697,39 @@ body {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* ── Print report (History → Print by Subject) ─────────────── */
+#print-area { display: none; }
+
+.print-header { margin-bottom: 22px; }
+.print-header h1 { font-size: 1.4rem; margin: 0 0 4px; }
+.print-header p { margin: 0; color: var(--ink-soft); font-size: .85rem; }
+.print-empty { color: var(--ink-soft); }
+
+.print-subject { margin-bottom: 26px; break-inside: avoid; }
+.print-subject h2 {
+  font-size: 1.05rem; margin: 0 0 8px; padding-bottom: 4px;
+  border-bottom: 2px solid var(--ink);
+}
+.print-count { font-weight: 400; font-size: .82rem; color: var(--ink-soft); }
+
+.print-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+.print-table th, .print-table td {
+  text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.print-table th { font-weight: 700; color: var(--ink-soft); }
+.print-table tr { break-inside: avoid; }
+
+@media print {
+  /* Elements like .tab/.seg/.chip use "transition: all", which also covers
+     visibility — without killing it first, the print snapshot can be taken
+     mid-transition and show dashboard chrome bleeding through the report. */
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+  body * { visibility: hidden; }
+  #print-area, #print-area * { visibility: visible; }
+  #print-area {
+    display: block; position: absolute; top: 0; left: 0; width: 100%;
+    margin: 0; padding: 0;
+  }
+}

@@ -759,6 +759,62 @@ function stepRange(dir) {
   renderHistory();
 }
 
+/* ---- print / PDF: full history, grouped subject by subject ---- */
+function buildSubjectPrintHtml() {
+  const bySubject = {};
+  state.entries.forEach(function (e) {
+    (bySubject[e.subject] = bySubject[e.subject] || []).push(e);
+  });
+
+  const order = SUBJECTS.filter(function (s) { return bySubject[s] && bySubject[s].length; });
+  Object.keys(bySubject).sort().forEach(function (s) {
+    if (order.indexOf(s) === -1) order.push(s); // custom/unknown subjects, alphabetical, after the known list
+  });
+
+  const now = new Date();
+  let html = '<div class="print-header">' +
+    '<h1>' + escapeHtml(CONFIG.STUDENT_NAME) + '&rsquo;s Study History &mdash; by Subject</h1>' +
+    '<p>' + state.entries.length + ' total ' + (state.entries.length === 1 ? "entry" : "entries") +
+      ' &middot; generated ' + fmtLongDate(now) + ' at ' + fmtTime(now.getTime()) + '</p>' +
+  '</div>';
+
+  if (!order.length) {
+    html += '<p class="print-empty">No entries logged yet.</p>';
+    return html;
+  }
+
+  html += order.map(function (subject) {
+    const list = bySubject[subject].slice().sort(function (a, b) { return a._ts - b._ts; }); // oldest first
+    return '<section class="print-subject">' +
+      '<h2>' + escapeHtml(subject) +
+        ' <span class="print-count">(' + list.length + (list.length === 1 ? " entry" : " entries") + ')</span></h2>' +
+      '<table class="print-table"><thead><tr>' +
+        '<th>Date</th><th>Day</th><th>Slot</th><th>Activity</th><th>Confidence</th><th>Topic</th><th>Status</th>' +
+      '</tr></thead><tbody>' +
+      list.map(function (e) {
+        return '<tr>' +
+          '<td>' + fmtShortDate(e._d) + '</td>' +
+          '<td>' + escapeHtml(e.day) + '</td>' +
+          '<td>' + escapeHtml(e.timeSlot) + '</td>' +
+          '<td>' + escapeHtml(e.activity) + '</td>' +
+          '<td>' + escapeHtml(e.confidence || "—") + '</td>' +
+          '<td>' + escapeHtml(e.topic) + '</td>' +
+          '<td>' + (e.onTime === "On-time" ? "On-time" : "Late") + '</td>' +
+        '</tr>';
+      }).join("") +
+      '</tbody></table>' +
+    '</section>';
+  }).join("");
+
+  return html;
+}
+
+function printHistoryBySubject() {
+  if (!state.entries.length) { net("No entries to print yet.", "error"); return; }
+  $("#print-area").innerHTML = buildSubjectPrintHtml();
+  window.print();
+}
+
 /* ---- subjects ---- */
 function renderSubject(subject) {
   const list = state.entries.filter(function (e) { return e.subject === subject; })
@@ -1240,6 +1296,7 @@ function bind() {
   $$("#f-range-nav [data-step]").forEach(function (b) {
     b.addEventListener("click", function () { stepRange(Number(b.dataset.step)); });
   });
+  $("#f-print-subject").addEventListener("click", printHistoryBySubject);
 
   // subjects
   $("#f-subject").addEventListener("change", function (e) { renderSubject(e.target.value); });
