@@ -251,6 +251,10 @@
               <button class="seg" data-range="all">All</button>
             </div>
           </div>
+          <div class="panel-head">
+            <p class="panel-note muted" style="margin:0">Print or save a PDF of the full record, grouped subject by subject.</p>
+            <button class="btn btn--ghost btn--small" id="f-print-subject">🖨️ Print by Subject</button>
+          </div>
           <div class="range-nav" id="f-range-nav">
             <button class="btn btn--ghost btn--small" data-step="-1">&larr;</button>
             <span id="f-range-label" class="range-label">—</span>
@@ -384,6 +388,9 @@
   <div id="netbar" class="netbar" hidden></div>
 
 </div>
+
+<!-- Print-only report: populated on demand, shown just for window.print() -->
+<div id="print-area"></div>
 
 <script src="config.js"></script>
 <script src="schedule.js"></script>
